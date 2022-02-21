@@ -27,7 +27,7 @@ def main():
     # parser.add_argument("-c", "--train_dataset", required=True, type=str, default="", help="train dataset for train bert")
     # parser.add_argument("-t", "--test_dataset", type=str, default=None, help="test set for evaluate train set")
     # parser.add_argument("-v", "--vocab_path", required=True, type=str, help="built vocab model      path with bert-vocab")
-    parser.add_argument("-o", "--output_path", default="C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/Transplant/outputdir/finetuning_model",
+    parser.add_argument("-o", "--output_path", default="C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/outputdir/finetuning_model",
                         type=str, help="ex)output/bert.model")
 
     parser.add_argument("-hs", "--hidden", type=int,
@@ -74,7 +74,7 @@ def main():
 
     args = parser.parse_args()
     dir_demo = "data/demo"
-    dir_data = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/Transplant/data/data"
+    dir_data = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/data/data"
     my_dir = dir_demo
     code_path = os.path.join(my_dir, "tokens.txt")
     NL_path = os.path.join(my_dir, "comment_tokens.txt")
@@ -104,7 +104,7 @@ def main():
         test_dataloader = None
 
     print("Building BERT model")
-    model_dir = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/Transplant/outputdir/pretraining_model/pretraining_model_ep150.pth"
+    model_dir = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/outputdir/pretraining_model/pretraining_model_ep150.pth"
     encoder = torch.load(model_dir)
     mucs = MuCS(encoder)
 

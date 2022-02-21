@@ -27,7 +27,7 @@ def main():
     # parser.add_argument("-c", "--train_dataset", required=True, type=str, default="", help="train dataset for train bert")
     # parser.add_argument("-t", "--test_dataset", type=str, default=None, help="test set for evaluate train set")
     # parser.add_argument("-v", "--vocab_path", required=True, type=str, help="built vocab model      path with bert-vocab")
-    parser.add_argument("-o", "--output_path", default="C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/Transplant/outputdir/finetuning_model",
+    parser.add_argument("-o", "--output_path", default="C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/outputdir/finetuning_model",
                         type=str, help="ex)output/bert.model")
 
     parser.add_argument("-hs", "--hidden", type=int,
@@ -75,7 +75,7 @@ def main():
     print("Loading instances...")
     args = parser.parse_args()
     dir_demo = "data/demo"
-    dir_data = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/Transplant/data/data"
+    dir_data = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/data/data"
     my_dir = dir_demo
     code_path = os.path.join(my_dir, "tokens.txt")
     NL_path = os.path.join(my_dir, "comment_tokens.txt")
@@ -97,14 +97,14 @@ def main():
                             batch_size=args.batch_size)
     print("Loading model...")
     model = torch.load(
-        "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/Transplant/outputdir/finetuning_model/ep150.pth")
+        "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/outputdir/finetuning_model/ep350.pth")
 
     input = torch.ones(256)
     mask = get_mask(input,8)
     input = input.int().unsqueeze(0)
     mask = mask.unsqueeze(0)
     pred = model(input,source_mask = mask)
-    print(pred)
+    print(pred.shape)
 
     trainer = FinetuningTrainer(model, train_dataloader=dataloader,
                                 lr=args.lr, betas=(

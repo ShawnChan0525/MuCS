@@ -469,6 +469,9 @@ class MuCS(nn.Module):
 
 
 class Beam(object):
+    '''
+        beam_size就是最后output的个数，也即一组input_ids对应beam_size组code summarization
+    '''
     def __init__(self, size, sos, eos):
         self.size = size
         self.tt = torch
