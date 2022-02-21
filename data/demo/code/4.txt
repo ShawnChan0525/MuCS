@@ -1,0 +1,3 @@
+public void testWriteByte ( ) throws Exception { ByteArrayOutputStream out = new ByteArrayOutputStream ( ) ; BitOutputStream bOut = new BitOutputStream ( out ) ; bOut . writeBit ( BOOL_ ) ; byte [ ] bytes = out . toByteArray ( ) ; Assert . assertEquals ( NUM_ , bytes . length ) ; bOut . write ( NUM_ ) ; bytes = out . toByteArray ( ) ; Assert . assertEquals ( NUM_ , bytes . length ) ; Assert . assertEquals ( NUM_ , bytes [ NUM_ ] ) ; Assert . assertEquals ( NUM_ , bytes [ NUM_ ] ) ; }
+
+

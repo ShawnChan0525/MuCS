@@ -1,0 +1,10 @@
+["boolean", "isUnary", "(", ")", ";"]
+
+["static", "String", "unicodeToASCII", "(", "String", "input", ")", "{", "try", "{", "return", "toASCII", "(", "input", ")", ";", "}", "catch", "(", "IllegalArgumentException", "e", ")", "{", "return", "input", ";", "}", "}"]
+
+["List", "<", "VersionInfo", ">", "listVersion", "(", "int", "deployId", ")", "throws", "Exception", ";"]
+
+["public", "boolean", "delete", "(", "String", "videoId", ")", "{", "return", "dbHelper", ".", "getWritableDatabase", "(", ")", ".", "delete", "(", "tableName", ",", "YouTubeVideoEntry", ".", "COLUMN_VIDEO_ID", "+", "STR_", "+", "videoId", "+", "STR_", ",", "null", ")", ">", "NUM_", ";", "}"]
+
+["public", "void", "testWriteByte", "(", ")", "throws", "Exception", "{", "ByteArrayOutputStream", "out", "=", "new", "ByteArrayOutputStream", "(", ")", ";", "BitOutputStream", "bOut", "=", "new", "BitOutputStream", "(", "out", ")", ";", "bOut", ".", "writeBit", "(", "BOOL_", ")", ";", "byte", "[", "]", "bytes", "=", "out", ".", "toByteArray", "(", ")", ";", "Assert", ".", "assertEquals", "(", "NUM_", ",", "bytes", ".", "length", ")", ";", "bOut", ".", "write", "(", "NUM_", ")", ";", "bytes", "=", "out", ".", "toByteArray", "(", ")", ";", "Assert", ".", "assertEquals", "(", "NUM_", ",", "bytes", ".", "length", ")", ";", "Assert", ".", "assertEquals", "(", "NUM_", ",", "bytes", "[", "NUM_", "]", ")", ";", "Assert", ".", "assertEquals", "(", "NUM_", ",", "bytes", "[", "NUM_", "]", ")", ";", "}"]
+

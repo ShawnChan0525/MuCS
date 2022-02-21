@@ -1,0 +1,3 @@
+static String unicodeToASCII ( String input ) { try { return toASCII ( input ) ; } catch ( IllegalArgumentException e ) { return input ; } }
+
+

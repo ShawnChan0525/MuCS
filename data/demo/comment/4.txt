@@ -1,0 +1,3 @@
+test that normal write oper flush the accumul bit 
+
+

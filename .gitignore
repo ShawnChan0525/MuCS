@@ -1,0 +1,4 @@
+*.pth
+*./pyc
+/data/data/code
+/data/data/comment

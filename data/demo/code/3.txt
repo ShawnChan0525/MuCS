@@ -1,0 +1,3 @@
+public boolean delete ( String videoId ) { return dbHelper . getWritableDatabase ( ) . delete ( tableName , YouTubeVideoEntry . COLUMN_VIDEO_ID + STR_ + videoId + STR_ , null ) > NUM_ ; }
+
+
