@@ -319,9 +319,9 @@ class BERT(nn.Module):
             attention_mask：各元素的值为0或1,避免在padding的token上计算attention, 1进行attetion, 0不进行attention
             以上两个参数的shape为： (batch_size, sequence_length); type为tensor
         """
-        # ULM时 需要修改mask变成下三角矩阵
-        if attention_mask is None:
-            attention_mask = get_mask(token_ids, self.nhead, self.with_ulm)
+        # ULM时 需要修改mask变成下三角矩阵（算法不对）
+        # if attention_mask is None:
+        #     attention_mask = get_mask(token_ids, self.nhead, self.with_ulm)
 
         # 兼容fp16
         attention_mask = attention_mask.to(dtype=next(self.parameters()).dtype)

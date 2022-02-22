@@ -7,17 +7,15 @@ import torch
 from torch.utils.data import DataLoader
 from models.bert_model import MuCS
 from models.trainers import FinetuningTrainer
+import logging
 
+from utils import read_vocab
 
-def load_instances(instances_path, is_shuffled=False, random_seed=None):
-    with open(instances_path, 'r')as f:
-        instances = json.load(f)
-    if is_shuffled:
-        rng = random.Random(random_seed)
-        rng.shuffle(instances)
-    return instances
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                    datefmt='%m/%d/%Y %H:%M:%S',
+                    level=logging.INFO)
 
-
+logger = logging.getLogger(__name__)
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--random_seed", type=int, default=12345,
@@ -47,9 +45,11 @@ def main():
                         default=200, help="number of epochs")
     parser.add_argument("-w", "--num_workers", type=int,
                         default=5, help="dataloader worker size")
-
+                        
     parser.add_argument("--with_cuda", type=bool, default=False,
                         help="training with CUDA: true, or false")
+    parser.add_argument("--local_rank", type=int, default=-1,
+                        help="For distributed training: local_rank")
     parser.add_argument("--with_test", type=bool, default=True,
                         help="whether to test")
     parser.add_argument("--with_predict", type=bool, default=False,
@@ -71,9 +71,22 @@ def main():
                         default=0.9, help="adam first beta value")
     parser.add_argument("--adam_beta2", type=float,
                         default=0.999, help="adam first beta value")
+    # Setup CUDA, GPU & distributed training
+    args = parser.parse_args()
+    if args.local_rank == -1 or not args.with_cuda:
+        device = torch.device(
+            "cuda" if torch.cuda.is_available() and args.with_cuda else "cpu")
+        args.n_gpu = torch.cuda.device_count()
+    else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
+        torch.cuda.set_device(args.local_rank)
+        device = torch.device("cuda", args.local_rank)
+        torch.distributed.init_process_group(backend='nccl')
+        args.n_gpu = 1
+    logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s",
+                   args.local_rank, device, args.n_gpu, bool(args.local_rank != -1))
+    args.device = device
 
     print("Loading instances...")
-    args = parser.parse_args()
     dir_demo = "data/demo"
     dir_data = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/data/data"
     my_dir = dir_demo
@@ -86,6 +99,8 @@ def main():
     # output_path = os.path.join(my_dir,"instances.txt")
     instances = get_instances(code_path, NL_path, SCP_path, AWP_path,
                               code_vocab_path, NL_vocab_path, args.seq_len, args.output_seq_len, args.with_ulm)
+    
+    # 可以用dataloader的shuffle属性来决定数据集是否打乱
     if args.is_shuffled:
         rng = random.Random(args.random_seed)
         rng.shuffle(instances)
@@ -99,12 +114,15 @@ def main():
     model = torch.load(
         "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/outputdir/finetuning_model/ep350.pth")
 
+    '''
+    demo
     input = torch.ones(256)
     mask = get_mask(input,8)
     input = input.int().unsqueeze(0)
     mask = mask.unsqueeze(0)
     pred = model(input,source_mask = mask)
     print(pred.shape)
+    '''
 
     trainer = FinetuningTrainer(model, train_dataloader=dataloader,
                                 lr=args.lr, betas=(
@@ -112,8 +130,8 @@ def main():
                                 with_cuda=args.with_cuda, cuda_devices=args.cuda_devices, log_freq=args.log_freq)
 
     print("Training Start")
-    for epoch in range(args.epochs):
-        trainer.predict()
+    NL_dict, _ = read_vocab(NL_vocab_path)
+    trainer.predict(NL_dict)
 
 if __name__ == '__main__':
     main()

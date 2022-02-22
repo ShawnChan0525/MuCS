@@ -51,4 +51,6 @@ def test_logsoftmax():
     print(output)
 
 if __name__=="__main__":
-    test_logsoftmax()
+    a = ['a','b','c','d']
+    b = dict(zip(range(4),a))
+    print(b)

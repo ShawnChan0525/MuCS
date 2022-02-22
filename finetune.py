@@ -8,16 +8,6 @@ from torch.utils.data import DataLoader
 from models.bert_model import MuCS
 from models.trainers import FinetuningTrainer
 
-
-def load_instances(instances_path, is_shuffled=False, random_seed=None):
-    with open(instances_path, 'r')as f:
-        instances = json.load(f)
-    if is_shuffled:
-        rng = random.Random(random_seed)
-        rng.shuffle(instances)
-    return instances
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--random_seed", type=int, default=12345,

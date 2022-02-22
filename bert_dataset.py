@@ -1,3 +1,4 @@
+from xml.dom import INDEX_SIZE_ERR
 from torch.utils.data import Dataset
 import torch
 import os
@@ -86,8 +87,7 @@ def get_instances(code_path, NL_path, SCP_path, AWP_path, code_vocab_path, NL_vo
         output_ids = file_to_id(NL2id, comment)
         output_ids = pad_input(output_ids,output_len)
         tgt_mask = get_mask(output_ids, with_ulm)
-        instance = TrainingInstance(
-            input_ids, output_ids, src_mask, tgt_mask, int(scp_list[i]), int(awp_list[i]))
+        instance = TrainingInstance(input_ids, output_ids, src_mask, tgt_mask, int(scp_list[i]), int(awp_list[i]))
         instances.append(instance)
 
     # with open(output_path, 'w')as f:

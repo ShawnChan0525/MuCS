@@ -1,10 +1,12 @@
+from pyparsing import Word
 import torch
 import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-
+import bleu
 from models.bert_model import BERT, MuCS
 from optim_schedule import ScheduledOptim
+from utils import id2word
 
 import tqdm
 
@@ -221,16 +223,49 @@ class FinetuningTrainer:
     def test(self, epoch):
         self.iteration(epoch, self.test_data, train=False)
     
-    def predict(self):
+    def predict(self, NL_dict):
         data_iter = tqdm.tqdm(enumerate(self.train_data),
                               total=len(self.train_data),
                               bar_format="{l_bar}{r_bar}")
+        candidates = []
+        references = []
+        
+        '''计算bleu的步骤'''
+        # 1. 取每个batch中的pred[0]
+        # 2. output = id2word(list(pred))
+        # 3. 将output转换成string
+        # 4. 生成字典predictionMap: idx, pred
+        # 5. 调用bleuFromMaps()计算bleu
 
         for _, data in data_iter:
             data = {key: value.to(self.device) for key, value in data.items()}
-            pred = self.model.forward(data["input_ids"], data["src_mask"])
-            print(pred.shape)
-            print(pred)
+            preds = self.model.forward(data["input_ids"], source_mask = data["src_mask"]) # batch_size*beam_size*seq_len
+            for ref in data['output_ids']:
+                ref = list(ref.numpy())
+                if 0 in ref:
+                    ref = ref[:ref.index(0)]
+                text = id2word(NL_dict,ref)
+                ref = " ".join(text)
+                references.append(ref)
+
+            for pred in preds:
+                t = pred[0].cpu().numpy()
+                t = list(t)
+                if 0 in t: # 或者应该是EOSid(2)？
+                    t = t[:t.index(0)]
+                text = id2word(NL_dict, t)
+                candidate = " ".join(text)
+                candidates.append(candidate)
+        
+        # 构造字典
+        dict_size = len(candidates)
+        predictionMap = dict(zip(range(dict_size),candidates))
+        refMap = dict(zip(range(dict_size),references))
+        
+        # 计算bleu
+        bleu_score = bleu.bleuFromMaps(refMap,predictionMap)
+        print(bleu_score) 
+        
 
     def iteration(self, epoch, data_loader, train=True):
         """
