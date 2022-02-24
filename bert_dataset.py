@@ -9,13 +9,15 @@ import numpy as np
 
 
 class TrainingInstance():
-    def __init__(self, input_ids, output_ids, src_mask, tgt_mask, awp_label, scp_label):
+    def __init__(self, input_ids, output_ids, src_mask, tgt_mask, awp_label, scp_label, code_size,NL_size):
         self.input_ids = input_ids
         self.output_ids = output_ids
         self.src_mask = src_mask
         self.tgt_mask = tgt_mask
         self.awp_label = awp_label
         self.scp_label = scp_label
+        self.code_size = code_size
+        self.NL_size = NL_size
 
 
 def read_vocab(vocab_path):
@@ -66,8 +68,10 @@ def get_instances(code_path, NL_path, SCP_path, AWP_path, code_vocab_path, NL_vo
     NL_list = open(NL_path, 'r', encoding='utf-8').readlines()
     NL_list = [x for x in NL_list if x!='\n']
 
-    code2id, vocab_szie = read_vocab(code_vocab_path)
-    NL2id, NL_vocab_size = read_vocab(NL_vocab_path)
+    code2id, vocab_szie = read_vocab(code_vocab_path) # 30000
+    # print("vocab_szie= ", vocab_szie)
+    NL2id, NL_vocab_size = read_vocab(NL_vocab_path) # 5680
+    # print("NL_vocab_size ", NL_vocab_size)
     instances = []
     for i in trange(inst_num):
         code_line = code_list[i].strip()
@@ -79,15 +83,17 @@ def get_instances(code_path, NL_path, SCP_path, AWP_path, code_vocab_path, NL_vo
         # 只放开始符，不放结束符
         # input_tokens.append('EOS')
         input_ids = file_to_id(code2id, input_tokens)
+        code_size = len(input_ids)
         input_ids = pad_input(input_ids,input_len)
         src_mask = get_mask(input_ids, with_ulm)
         output_tokens = ['CLS']
         output_tokens.extend(comment) 
         # output_tokens.append('EOS')
         output_ids = file_to_id(NL2id, comment)
+        NL_size = len(output_ids)
         output_ids = pad_input(output_ids,output_len)
         tgt_mask = get_mask(output_ids, with_ulm)
-        instance = TrainingInstance(input_ids, output_ids, src_mask, tgt_mask, int(scp_list[i]), int(awp_list[i]))
+        instance = TrainingInstance(input_ids, output_ids, src_mask, tgt_mask, int(awp_list[i]), int(scp_list[i]),code_size,NL_size)
         instances.append(instance)
 
     # with open(output_path, 'w')as f:
@@ -118,7 +124,8 @@ class BertDataset(Dataset):
                   "src_mask": instance.src_mask,
                   "tgt_mask": instance.tgt_mask,
                   "awp_label": instance.awp_label,
-                  "scp_label": instance.scp_label}
+                  "scp_label": instance.scp_label,
+                  "code_size": instance.code_size}
         return {key: torch.tensor(value) for key, value in output.items()}
 
 

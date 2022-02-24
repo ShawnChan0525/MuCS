@@ -22,6 +22,6 @@ def read_vocab(vocab_path):
     return word_to_id, vocab_size
 
 if __name__ == "__main__":
-    dir = "C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/data/data/comment_vocabs.txt"
+    dir = "data/data/comment_vocabs.txt"
     dicts,_ = read_vocab(dir)
     print(id2word(dicts, [1,2,3,4]))

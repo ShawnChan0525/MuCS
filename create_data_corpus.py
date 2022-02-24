@@ -141,6 +141,6 @@ def getSCP():
 if __name__ == "__main__":
     token_file = 'data/processed_data/tokens.txt'
     # token_corpus = FLAGS.token_file # tokens.txt
-    project_path = 'C:/Users/Shawnchan/Desktop/iSE/Multi-task code summerization/MuCS/data/data'
+    project_path = 'data/data'
     documents = create_training_corpus(project_path,20000)
     # getSCP()

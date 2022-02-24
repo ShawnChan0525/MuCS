@@ -1,4 +1,4 @@
-from torch.nn import LayerNorm
+# from torch.nn import LayerNorm
 import torch.nn.functional as F
 import torch.nn as nn
 import torch
@@ -48,6 +48,37 @@ def get_mask(input_ids, nhead, is_ulm=False):
     output_mask = output_mask.repeat(nhead, 1, 1)
     return output_mask
 
+class LayerNorm(nn.Module):
+
+    def __init__(self, hidden_size, eps=1e-12, conditional=False):
+        super(LayerNorm, self).__init__()
+        self.weight = nn.Parameter(torch.ones(hidden_size))
+        self.bias = nn.Parameter(torch.zeros(hidden_size))
+        self.eps = eps
+        self.conditional = conditional
+        if conditional:
+            # 条件layernorm, 用于条件文本生成,
+            # 这里采用全零初始化, 目的是在初始状态不干扰原来的预训练权重
+            self.dense1 = nn.Linear(2 * hidden_size, hidden_size, bias=False)
+            self.dense.weight.data.uniform_(0, 0)
+            self.dense2 = nn.Linear(2 * hidden_size, hidden_size, bias=False)
+            self.dense.weight.data.uniform_(0, 0)
+
+    def forward(self, x):
+        if self.conditional:
+            inputs = x[0]
+            cond = x[1]
+            for _ in range(len(inputs.shape) - len(cond.shape)):
+                cond = cond.unsqueeze(dim=1)
+            u = inputs.mean(-1, keepdim=True)
+            s = (inputs - u).pow(2).mean(-1, keepdim=True)
+            x = (inputs - u) / torch.sqrt(s + self.eps)
+            return (self.weight + self.dense1(cond)) * x + (self.bias + self.dense2(cond))
+        else:
+            u = x.mean(-1, keepdim=True)
+            s = (x - u).pow(2).mean(-1, keepdim=True)
+            x = (x - u) / torch.sqrt(s + self.eps)
+            return self.weight * x + self.bias
 
 class MultiheadAttention(nn.Module):
     def __init__(self, hidden_size, num_attention_heads, dropout_rate, attention_scale=True,
@@ -277,6 +308,7 @@ class BERT(nn.Module):
                           self.dim_feedforward, self.activation, is_dropout=False, eps=self.layer_norm_eps)
         self.encoderLayer = nn.ModuleList(
             [copy.deepcopy(layer) for _ in range(self.num_layers)])
+        self.softmax = nn.Softmax(dim=-1)
         if self.with_pool:
             # Pooler部分（提取CLS向量）
             self.pooler = nn.Linear(
@@ -324,7 +356,7 @@ class BERT(nn.Module):
         #     attention_mask = get_mask(token_ids, self.nhead, self.with_ulm)
 
         # 兼容fp16
-        attention_mask = attention_mask.to(dtype=next(self.parameters()).dtype)
+        # attention_mask = attention_mask.to(dtype=next(self.parameters()).dtype)
         # 对mask矩阵中，数值为0的转换成很大的负数，使得不需要attention的位置经过softmax后,分数趋近于0
         # attention_mask = (1.0 - attention_mask) * -10000.0
         # 执行embedding
@@ -433,7 +465,7 @@ class MuCS(nn.Module):
         else:
             # 没有目标id，属于预测，输出的是预测的向量
             preds = []
-            zero = torch.LongTensor(1).fill_(0)
+            zero = torch.cuda.LongTensor(1).fill_(0)
             for i in range(source_ids.shape[0]):
                 context = encoder_output[i:i+1, :]
                 context_mask = source_mask[i:i+1, :]
@@ -474,7 +506,7 @@ class Beam(object):
     '''
     def __init__(self, size, sos, eos):
         self.size = size
-        self.tt = torch
+        self.tt = torch.cuda
         # The score for each translation on the beam.
         self.scores = self.tt.FloatTensor(size).zero_()
         # The backpointers at each time-step.
