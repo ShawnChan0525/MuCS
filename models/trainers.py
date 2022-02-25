@@ -180,7 +180,7 @@ class BERTTrainer:
 
             total_element += data["awp_label"].nelement()
             # total_ulm_element += data["code_size"].sum().item() 也不对
-            total_ulm_element += data["code_size"].nelement()
+            total_ulm_element += data["input_ids"].nelement()
             total_awp_correct += awp_correct
             total_scp_correct += scp_correct
             total_ulm_correct += ulm_correct
@@ -296,8 +296,8 @@ class FinetuningTrainer:
             # 减去batch_szie的大小，因为output shift过
             # total_element += (data["NL_size"].sum().item() -
             #                   data["NL_size"].shape[0])
-            total_element += (data["NL_size"].nelement() -
-                              data["NL_size"].shape[0])
+            total_element += (shift_output.nelement() -
+                              shift_output.shape[0])
             total_NL_correct += NL_correct
 
             post_fix = {
