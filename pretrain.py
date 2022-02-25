@@ -9,18 +9,19 @@ from torch.utils.data import DataLoader
 from models.bert_model import BERT
 from models.trainers import BERTTrainer
 import logging
-import os 
+import os
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--random_seed", type=int, default=12345,
                         help="Random seed for data generation.")
-    parser.add_argument("--is_shuffled", type=bool, default=False,
+    parser.add_argument("--is_shuffled", type=bool, default=True,
                         help="Whether to shuffle the instances.")
     # parser.add_argument("-c", "--train_dataset", required=True, type=str, default="", help="train dataset for train bert")
     # parser.add_argument("-t", "--test_dataset", type=str, default=None, help="test set for evaluate train set")
@@ -49,8 +50,8 @@ def main():
     parser.add_argument("--with_test", type=bool, default=True,
                         help="whether to test")
     parser.add_argument("--with_ulm", type=bool, default=True,
-                        help="whether to use unidirectional language model")             
-    parser.add_argument("--log_freq", type=int, default=3,
+                        help="whether to use unidirectional language model")
+    parser.add_argument("--log_freq", type=int, default=5,
                         help="printing loss every n iter: setting n")
     parser.add_argument("--cuda_devices", type=str, nargs='+',
                         default='4', help="CUDA device ids")
@@ -59,7 +60,7 @@ def main():
     parser.add_argument("--local_rank", type=int, default=-1,
                         help="For distributed training: local_rank")
 
-    parser.add_argument("--lr", type=float, default=1e-5,
+    parser.add_argument("--lr", type=float, default=5e-5,
                         help="learning rate of adam")
     parser.add_argument("--adam_weight_decay", type=float,
                         default=0.01, help="weight_decay of adam")
@@ -86,7 +87,6 @@ def main():
                    args.local_rank, device, args.n_gpu, bool(args.local_rank != -1))
     args.device = device
 
-    
     dir_demo = "data/demo"
     dir_data = "data/data"
     my_dir = dir_data
@@ -97,45 +97,49 @@ def main():
     code_vocab_path = os.path.join(my_dir, "vocabs.txt")
     NL_vocab_path = os.path.join(my_dir, "comment_vocabs.txt")
     # output_path = os.path.join(my_dir,"instances.txt")
-    instances = get_instances(code_path, NL_path, SCP_path, AWP_path,
-                                                         code_vocab_path, NL_vocab_path, args.seq_len, args.output_seq_len, args.with_ulm)
-    
-    if args.is_shuffled:
-        rng = random.Random(args.random_seed)
-        rng.shuffle(instances)
+    instances,vocab_size,_ = get_instances(code_path, NL_path, SCP_path, AWP_path,
+                              code_vocab_path, NL_vocab_path, args.seq_len, args.output_seq_len, args.with_ulm)
+
+    # if args.is_shuffled:
+    #     rng = random.Random(args.random_seed)
+    #     rng.shuffle(instances)
 
     num_for_training = int(len(instances)*0.8)
     num_for_testing = int(len(instances)*0.9)
     print("Creating Train Dataset")
     train_dataset = BertDataset(instances[:num_for_training])
     print("Creating Dataloader")
-    train_dataloader = DataLoader(dataset=train_dataset, batch_size=args.batch_size)
-    
+    train_dataloader = DataLoader(
+        dataset=train_dataset, batch_size=args.batch_size,shuffle=args.is_shuffled)
+
     if args.with_test:
         print("Initial test_dataset")
         test_dataset = BertDataset(instances[num_for_training:num_for_testing])
         print("Creating Dataloader")
-        test_dataloader = DataLoader(dataset=test_dataset, batch_size=args.batch_size)
+        test_dataloader = DataLoader(
+            dataset=test_dataset, batch_size=args.batch_size, shuffle=args.is_shuffled)
     else:
         test_dataloader = None
 
     print("Building BERT model")
-    bert = BERT()
+    bert = BERT(vocab_size=vocab_size)
     bert.to(device)
 
     print("Creating BERT Trainer")
-    trainer = BERTTrainer(bert, train_dataloader=train_dataloader,test_dataloader=test_dataloader,
+    trainer = BERTTrainer(bert, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                           lr=args.lr, betas=(
                               args.adam_beta1, args.adam_beta2), weight_decay=args.adam_weight_decay,
                           with_cuda=args.with_cuda, cuda_devices=args.cuda_devices, log_freq=args.log_freq)
 
     print("Training Start")
+    output_txt = open("outputdir/pretrain_result", 'w', encoding="utf-8")
     for epoch in range(args.epochs):
         trainer.train(epoch)
         if epoch % args.log_freq == 0:
             trainer.save(epoch, args.output_path)
         if test_dataloader is not None:
-            trainer.test(epoch)
+            trainer.test(epoch, output_txt)
+
 
 if __name__ == '__main__':
     main()

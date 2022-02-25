@@ -262,7 +262,7 @@ class BertLayer(nn.Module):
         return hidden_states
 
 
-class BERT(nn.Module):
+class BERT(nn.Transformer):
 
     """
         构建BERT模型，预训练只用bert即可，微调时作为MuCS的encoder部分
@@ -286,8 +286,7 @@ class BERT(nn.Module):
             scp_cls=6,  # scp分类个数
             awp_cls=40  # awp分类个数
     ):
-        self.d_model = d_model
-        self.nhead = nhead
+        super(BERT, self).__init__(d_model,nhead,num_layers,num_layers,dim_feedforward,dropout,activation,layer_norm_eps=layer_norm_eps)
         self.vocab_size = vocab_size
         self.max_seq = max_seq
         self.initializer_range = initializer_range
@@ -301,7 +300,6 @@ class BERT(nn.Module):
         self.dim_feedforward = dim_feedforward
         self.activation = activation
         self.layer_norm_eps = layer_norm_eps
-        super(BERT, self).__init__()
         self.embeddings = BertEmbeddings(
             self.vocab_size, self.d_model, self.max_seq, self.dropout, self.layer_norm_eps)
         layer = BertLayer(self.d_model, self.nhead, self.dropout,
@@ -412,7 +410,8 @@ class MuCS(nn.Module):
             eps=1e-05,
             beam_size=5,  # beam的大小
             sos_id=2,  # 开始符的id
-            eos_id=3  # 结束符的id
+            eos_id=3,  # 结束符的id
+            device='cpu'
     ):
         super(MuCS, self).__init__()
         self.encoder = encoder
@@ -435,6 +434,7 @@ class MuCS(nn.Module):
         self.beam_size = beam_size
         self.sos_id = sos_id
         self.eos_id = eos_id
+        self.device = device
 
     def forward(self, source_ids, target_ids=None, source_mask=None, target_mask: torch.Tensor = None):
         encoder_output, _, _, _ = self.encoder(

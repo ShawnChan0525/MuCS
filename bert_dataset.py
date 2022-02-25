@@ -99,7 +99,7 @@ def get_instances(code_path, NL_path, SCP_path, AWP_path, code_vocab_path, NL_vo
     # with open(output_path, 'w')as f:
     #     instances = json.dumps(instances, default=lambda o: o.__dict__, sort_keys=True, indent=4)
     #     json.dump(instances, f)
-    return instances
+    return instances, vocab_szie, NL_vocab_size
 
 
 class BertDataset(Dataset):
@@ -125,7 +125,8 @@ class BertDataset(Dataset):
                   "tgt_mask": instance.tgt_mask,
                   "awp_label": instance.awp_label,
                   "scp_label": instance.scp_label,
-                  "code_size": instance.code_size}
+                  "code_size": instance.code_size,
+                  "NL_size": instance.NL_size}
         return {key: torch.tensor(value) for key, value in output.items()}
 
 

@@ -213,7 +213,10 @@ def bleuFromMaps(m1, m2):
 
     for key in m1:
         if key in m2:
-            bl = bleu(m1[key], m2[key][0])
+            if m2[key][0]!='':
+                bl = bleu(m1[key], m2[key][0])
+            else:
+                bl = [0] * 5
             score = [score[i] + bl[i] for i in range(0, len(bl))]
             num += 1
     return [s * 100.0 / num for s in score]
